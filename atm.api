@@ -1,0 +1,169 @@
+syntax = "v1"
+
+service atm {
+	@doc(
+		summary: "Ping"
+	)
+	@handler Ping
+	get /api/atm/ping (PingRequest) returns (PingResponse)
+	
+	@doc(
+		summary: "用户注册"
+	)
+	@handler UserRegister
+	post /api/atm/user/register (UserRegisterRequest) returns (UserRegisterResponse)
+	
+	@doc(
+		summary: "用户登录"
+	)
+	@handler UserLogin
+	post /api/atm/user/login (UserLoginRequest) returns (UserLoginResponse)
+}
+
+@server(
+	jwt: Auth
+)
+service atm {
+	@doc(
+		summary: "用户信息"
+	)
+	@handler UserInfo
+	get /api/atm/user/info (UserInfoRequest) returns (UserInfoResponse)
+	
+	@doc(
+		summary: "修改密码"
+	)
+	@handler ChangePassword
+	post /api/atm/user/change_password (ChangePasswordRequest) returns (ChangePasswordResponse)
+	
+	@doc(
+		summary: "存钱"
+	)
+	@handler PutMoney
+	post /api/atm/money/put (PutMoneyRequest) returns (PutMoneyResponse)
+	
+	@doc(
+		summary: "取钱"
+	)
+	@handler TakeMoney
+	post /api/atm/money/take (TakeMoneyRequest) returns (TakeMoneyResponse)
+	
+	@doc(
+		summary: "查看流水"
+	)
+	@handler GetTransactionMoney
+	get /api/atm/money/get_transaction (GetTransactionMoneyRequest) returns (GetTransactionMoneyResponse)
+	
+	@doc(
+		summary: "转账"
+	)
+	@handler TransferMoney
+	post /api/atm/money/transfer (TransferMoneyRequest) returns (TransferMoneyResponse)
+}
+
+type (
+	ChangePasswordRequest {
+		NewPassword string `json:"new_password" vd:"len($)>=6;msg:'密码长度最少6位'"`
+	}
+	ChangePasswordResponse {
+	}
+)
+
+type (
+	TransferMoneyRequest {
+		ToAccountNumber string  `json:"to_account_number"`
+		Amount          float64 `json:"amount" vd:"$>0&&$<1000000;msg:'转账金额不合法'"`
+	}
+	TransferMoneyResponse {
+	}
+)
+
+type (
+	GetTransactionMoneyRequest {
+		PageNum  int64 `form:"page_num" vd:"$>0;msg:'页码不合法'"`
+		PageSize int64 `form:"page_size" vd:"$>0&&$<100;msg:'页大小不合法'"`
+	}
+	GetTransactionMoneyResponse {
+		Total        int64          `json:"total"`
+		Transactions []*Transaction `json:"transactions"`
+	}
+)
+
+type (
+	PutMoneyRequest {
+		Amount float64 `json:"amount" vd:"$>0&&$<1000000;msg:'转账金额不合法'"`
+	}
+	PutMoneyResponse {
+		Balance float64 `json:"balance"`
+	}
+)
+
+type (
+	TakeMoneyRequest {
+		Amount float64 `json:"amount" vd:"$>0&&$<1000000;msg:'取款金额不合法'"`
+	}
+	TakeMoneyResponse {
+		Balance float64 `json:"balance"`
+	}
+)
+
+type (
+	UserLoginRequest {
+		AccountNumber string `json:"account_number"`
+		Password      string `json:"password"`
+	}
+	UserLoginResponse {
+		UserId        int64  `json:"user_id"`
+		AccountNumber string `json:"account_number"`
+		Token         string `json:"token"`
+	}
+)
+
+type (
+	UserInfoRequest {
+	}
+
+	UserInfoResponse {
+		User *User `json:"user"`
+	}
+)
+
+type (
+	UserRegisterRequest {
+		Name     string `json:"name"`
+		IdCard   string `json:"id_card"`
+		BankName string `json:"bank_name"`
+		Phone    string `json:"phone"`
+		Password string `json:"password"`
+	}
+	UserRegisterResponse {
+		UserId        int64  `json:"user_id"`
+		AccountNumber string `json:"account_number"`
+	}
+)
+
+type (
+	PingRequest {
+	}
+	PingResponse {
+		Message string `json:"message"`
+	}
+)
+
+type Transaction {
+	Id          int64   `json:"id"`
+	UserId      int64   `json:"user_id"`
+	Amount      float64 `json:"amount"`
+	Type        string  `json:"type"`
+	Description string  `json:"description"`
+	CreateTime  string  `json:"create_time"`
+}
+
+type User {
+	Id            int64   `json:"id"`
+	AccountNumber string  `json:"account_number"`
+	Name          string  `json:"name"`
+	BankName      string  `json:"bank_name"`
+	Phone         string  `json:"phone"`
+	Balance       float64 `json:"balance"`
+}
